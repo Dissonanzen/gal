@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meine Galerie</title>
+    <style>
+        /* --- CSS: Design und Layout --- */
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #000000;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Toggle Button Oben Rechts */
+        #theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: 2px solid var(--text-color);
+            color: var(--text-color);
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+            z-index: 100;
+            transition: 0.3s ease;
+        }
+
+        #theme-toggle:hover {
+            background-color: var(--text-color);
+            color: var(--bg-color);
+        }
+
+        /* Galerie Container */
+        #gallery {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px; /* Maximale Breite der Galerie */
+            padding-top: 80px; /* Platz für den Button */
+        }
+
+        #gallery img {
+            max-width: 90%;
+            height: auto;
+            margin-bottom: 60px; /* Angenehmer Abstand zwischen den Bildern */
+            cursor: zoom-in;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+
+        #gallery img:hover {
+            transform: scale(1.02); /* Leichter Zoom beim Drüberfahren */
+        }
+
+        /* Vollbild Modus (Modal) */
+        #fullscreen-modal {
+            display: none; /* Standardmäßig versteckt */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--bg-color);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            cursor: zoom-out;
+        }
+
+        #fullscreen-modal img {
+            max-width: 100vw;
+            max-height: 100vh;
+            /* object-fit: contain sorgt dafür, dass das Bild immer perfekt ins Fenster passt, egal ob quer oder hochkant! */
+            object-fit: contain; 
+        }
+    </style>
+</head>
+<body>
+
+    <button id="theme-toggle">Dark Mode</button>
+
+    <div id="gallery">
+        </div>
+
+    <div id="fullscreen-modal">
+        <img id="fullscreen-img" src="" alt="Vollbild">
+    </div>
+
+    <script>
+        /* --- JavaScript: Logik --- */
+
+        // 1. HIER TRÄGST DU DEINE BILDER EIN!
+        // Lege einen Ordner "images" an und schreibe die Dateinamen hier rein:
+        const imageFiles = [
+            "bild1.jpg",
+            "bild2.jpg",
+            // Füge einfach neue Bilder mit Komma getrennt hinzu
+        ];
+
+        const galleryContainer = document.getElementById('gallery');
+        const modal = document.getElementById('fullscreen-modal');
+        const modalImg = document.getElementById('fullscreen-img');
+        const themeToggle = document.getElementById('theme-toggle');
+
+        // 2. Bilder in die Galerie laden
+        imageFiles.forEach(filename => {
+            const imgElement = document.createElement('img');
+            imgElement.src = `images/${filename}`;
+            imgElement.alt = filename;
+            
+            // Klick-Event für Vollbild
+            imgElement.addEventListener('click', () => {
+                modalImg.src = imgElement.src;
+                modal.style.display = 'flex';
+            });
+
+            galleryContainer.appendChild(imgElement);
+        });
+
+        // 3. Vollbild schließen bei Klick
+        modal.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+
+        // 4. Dark/Light Mode Toggle Logik
+        let isDarkMode = false;
+        themeToggle.addEventListener('click', () => {
+            isDarkMode = !isDarkMode;
+            if (isDarkMode) {
+                document.body.setAttribute('data-theme', 'dark');
+                themeToggle.innerText = 'Light Mode';
+            } else {
+                document.body.removeAttribute('data-theme');
+                themeToggle.innerText = 'Dark Mode';
+            }
+        });
+    </script>
+</body>
+</html>
