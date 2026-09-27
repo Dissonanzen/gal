@@ -34,7 +34,6 @@
             transition: background-color 0.3s ease, color 0.3s ease;
         }
         
-        /* Body Scroll blockieren für Vollbild */
         body.no-scroll {
             overflow: hidden;
         }
@@ -71,7 +70,6 @@
             padding-bottom: 2px;
         }
         
-        /* Elegante Unterstreichung */
         .nav-link::after {
             content: '';
             position: absolute;
@@ -87,7 +85,6 @@
             transform: scaleX(1);
         }
 
-        /* Eckige, minimalistische Buttons */
         button {
             background: transparent;
             border: 1px solid var(--text-color);
@@ -110,11 +107,10 @@
             padding: 20px;
         }
 
-        /* Strenges Grid-Layout für beide Galerien */
         .gallery-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 10px; /* Dünne Abstände */
+            gap: 10px;
             align-items: start;
             justify-items: start;
         }
@@ -137,18 +133,14 @@
             font-size: 1.1rem;
         }
 
-        /* Sektionen */
-        #gallery-section { display: grid; } /* Startansicht */
+        #gallery-section { display: grid; }
         #text-section, #tbd-section, #tbd-content { display: none; }
 
-        /* TBD Lock Screen */
         #tbd-section {
-            /* Positioniert das Rechteck oben links (unter der Navbar) */
             padding-top: 10px;
         }
 
-        /* Minimalistisches Rechteck, keine Effekte */
-        #password-input {
+        #key-input {
             width: 150px;
             padding: 8px;
             font-size: 1rem;
@@ -159,7 +151,6 @@
             outline: none;
         }
 
-        /* Vollbild Modus */
         #fullscreen-modal {
             display: none;
             position: fixed;
@@ -193,13 +184,16 @@
             color: var(--text-color);
         }
 
+        /* Angepasst für negative Farben */
         #image-number {
             position: absolute;
             font-size: 1.2rem;
             font-family: monospace;
-            color: var(--text-color);
             z-index: 1002;
             pointer-events: none;
+            /* Diese beiden Zeilen sorgen für den Negativ-Effekt! */
+            color: #ffffff; 
+            mix-blend-mode: difference; 
         }
     </style>
 </head>
@@ -219,18 +213,15 @@
     </nav>
 
     <main>
-        <!-- Standard Bilder -->
         <section id="gallery-section" class="gallery-grid"></section>
         
-        <!-- Standard Texte -->
         <section id="text-section" class="text-content"></section>
 
-        <!-- TBD Bereich -->
         <section id="tbd-section">
-            <input type="text" id="password-input" autocomplete="off">
+            <!-- ID zu key-input geändert -->
+            <input type="text" id="key-input" autocomplete="off">
         </section>
 
-        <!-- Geheimer TBD Content (Bilder + Text drunter) -->
         <section id="tbd-content">
             <div id="tbd-gallery" class="gallery-grid"></div>
             <div id="tbd-text" class="text-content"></div>
@@ -247,7 +238,7 @@
 
     <script>
         // --- KONFIGURATION ---
-        const secretPassword = "agave"; // HIER PASSWORT ÄNDERN
+        const secretKey = "agave"; // HIER DEN KEY ÄNDERN
 
         const imageFiles = [
             "bild1.JPG", "bild2.JPG", "3.JPG", "4.JPG", "5.JPG", 
@@ -271,7 +262,7 @@
         const tbdContent = document.getElementById('tbd-content');
         const tbdGallery = document.getElementById('tbd-gallery');
         const tbdText = document.getElementById('tbd-text');
-        const passwordInput = document.getElementById('password-input');
+        const keyInput = document.getElementById('key-input');
         
         const linkBilder = document.getElementById('link-bilder');
         const linkTexte = document.getElementById('link-texte');
@@ -287,7 +278,7 @@
         // --- STATUS VARIABLEN ---
         let currentLang = navigator.language.toLowerCase().startsWith('en') ? 'en' : 'de';
         let currentIndex = 0;
-        let activeImageArray = imageFiles; // Speichert, ob wir gerade in der normalen oder geheimen Galerie blättern
+        let activeImageArray = imageFiles; 
         let tbdUnlocked = false;
 
         // --- HILFSFUNKTIONEN ---
@@ -301,16 +292,16 @@
             tbdContent.style.display = 'none';
         }
 
-        // --- PASSWORT LOGIK ---
-        passwordInput.addEventListener('keydown', (e) => {
+        // --- KEY LOGIK ---
+        keyInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                if (passwordInput.value === secretPassword) {
+                // toLowerCase() macht die Eingabe case-insensitive
+                if (keyInput.value.trim().toLowerCase() === secretKey.toLowerCase()) {
                     tbdUnlocked = true;
                     tbdSection.style.display = 'none';
                     tbdContent.style.display = 'block';
                     loadTextFile(tbdText, currentLang === 'en' ? 'textstbd.txt' : 'texttbd.txt');
                 }
-                // Wenn falsch: Keine Reaktion, kein rotes Aufblitzen, einfach nichts.
             }
         });
 
@@ -333,8 +324,8 @@
                 tbdContent.style.display = 'block';
             } else {
                 tbdSection.style.display = 'block';
-                passwordInput.value = ''; // Feld leeren bei neuem Aufruf
-                passwordInput.focus();
+                keyInput.value = '';
+                keyInput.focus();
             }
         });
 
@@ -342,10 +333,18 @@
         function parseRefs(text) {
             return text.replace(/\\ref\{([^}]+)\}/g, (match, filename) => {
                 let imgNum = imageFiles.length - 1 - imageFiles.indexOf(filename);
+                let isTbd = false;
+                
                 if (imageFiles.indexOf(filename) === -1) {
                     imgNum = tbdImages.length - 1 - tbdImages.indexOf(filename);
+                    isTbd = true;
                 }
-                return imgNum !== -1 ? imgNum : "[Bild nicht gefunden]";
+                
+                if (imgNum !== -1) {
+                    return isTbd ? `tbd${imgNum}` : imgNum;
+                } else {
+                    return "[Bild nicht gefunden]";
+                }
             });
         }
 
@@ -403,11 +402,26 @@
         function updateImageNumber() {
             const imgNum = activeImageArray.length - 1 - currentIndex;
             const prefix = currentLang === 'en' ? 'Image' : 'Bild';
-            imageNumberEl.innerText = `${prefix}: ${imgNum}`;
+            const isTbd = activeImageArray === tbdImages;
             
-            const isLeft = Math.random() > 0.5;
-            const randomX = isLeft ? Math.random() * 15 + 5 : Math.random() * 15 + 80;
-            const randomY = Math.random() * 80 + 10;
+            // "tbd" Präfix hinzufügen, falls wir in der geheimen Galerie sind
+            imageNumberEl.innerText = `${prefix}: ${isTbd ? 'tbd' : ''}${imgNum}`;
+            
+            // Wahrscheinlichkeit für die Position berechnen
+            const isOutside = Math.random() < 0.7; // 70% Chance für außerhalb
+            
+            let randomX, randomY;
+            
+            if (isOutside) {
+                // Außerhalb: In den Rändern links oder rechts platzieren
+                const isLeft = Math.random() > 0.5;
+                randomX = isLeft ? Math.random() * 15 + 5 : Math.random() * 15 + 80;
+                randomY = Math.random() * 80 + 10;
+            } else {
+                // Innerhalb: Eher zentral (30% bis 70% vom Rand) wo das Bild meist liegt
+                randomX = Math.random() * 40 + 30;
+                randomY = Math.random() * 40 + 30;
+            }
             
             imageNumberEl.style.left = `${randomX}vw`;
             imageNumberEl.style.top = `${randomY}vh`;
