@@ -52,23 +52,43 @@
         .nav-left { 
             display: flex; 
             align-items: center; 
-            gap: 15px; 
+            gap: 20px; 
             font-weight: bold; 
             font-size: 1.2rem; 
         }
         
-        .nav-right { display: flex; gap: 15px; align-items: center; }
-        .nav-link { cursor: pointer; text-decoration: none; color: var(--text-color); }
-        .nav-link.active { text-decoration: underline; }
+        .nav-right { display: flex; gap: 20px; align-items: center; }
+        
+        .nav-link { 
+            cursor: pointer; 
+            text-decoration: none; 
+            color: var(--text-color); 
+            padding-bottom: 2px;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+        
+        .nav-link.active { 
+            border-bottom: 1px solid var(--text-color);
+        }
 
+        /* Neue, ästhetische Buttons */
         button {
-            background: none;
+            background: transparent;
             border: 1px solid var(--text-color);
             color: var(--text-color);
-            padding: 5px 10px;
+            padding: 6px 14px;
             cursor: pointer;
-            border-radius: 4px;
-            font-size: 0.9rem;
+            border-radius: 0; /* Streng eckig */
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            background-color: var(--text-color);
+            color: var(--bg-color);
         }
 
         main {
@@ -76,18 +96,18 @@
             padding: 20px;
         }
 
-        /* Strenges 4-Spalten Grid-Layout mit dünnen Abständen */
+        /* Strenges 4-Spalten Grid-Layout mit etwas mehr Abstand */
         #gallery-section {
             display: grid;
-            grid-template-columns: repeat(4, 1fr); /* Erzwingt exakt 4 Spalten */
-            gap: 5px; /* Dünne Lücke zwischen den Zellen */
-            align-items: start; /* Bilder oben in der Zelle ausrichten */
-            justify-items: start; /* Bilder links in der Zelle ausrichten */
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px; /* Leicht vergrößerter Abstand */
+            align-items: start;
+            justify-items: start;
         }
 
         #gallery-section img {
-            width: 100%; /* Füllt die Spaltenbreite aus */
-            height: auto; /* Behält das Originalformat strikt bei */
+            width: 100%; 
+            height: auto; 
             display: block;
             cursor: zoom-in;
             transition: opacity 0.2s ease;
@@ -146,10 +166,12 @@
             pointer-events: none;
         }
 
-        /* Sorgt für kleinere Spaltenanzahl auf Handys, damit man noch was erkennt */
         @media (max-width: 768px) {
             #gallery-section {
                 grid-template-columns: repeat(2, 1fr);
+            }
+            .nav-left, .nav-right {
+                gap: 10px;
             }
         }
     </style>
@@ -208,16 +230,13 @@
         // SPRACH-LOGIK
         let currentLang = navigator.language.toLowerCase().startsWith('en') ? 'en' : 'de';
 
-        // Funktion zum Ersetzen von \ref{Dateiname} im Text
         function processReferences(text) {
             return text.replace(/\\ref\{([^}]+)\}/g, (match, filename) => {
                 const cleanFilename = filename.trim();
                 const index = imageFiles.indexOf(cleanFilename);
                 if (index !== -1) {
-                    // Berechnet die korrekte Nummer (unterstes Bild = 0)
                     return imageFiles.length - 1 - index;
                 }
-                // Wenn Dateiname nicht in der Liste gefunden wird
                 return `[Bild '${cleanFilename}' nicht gefunden]`;
             });
         }
@@ -232,11 +251,8 @@
                     return response.text();
                 })
                 .then(text => {
-                    // Verarbeitet die \ref{} Platzhalter
                     const processedText = processReferences(text);
                     textSection.textContent = processedText;
-                    
-                    // Lädt MathJax für die LaTeX Formeln
                     if (window.MathJax) MathJax.typesetPromise([textSection]);
                 })
                 .catch(error => {
@@ -275,11 +291,11 @@
                 modalImg.src = `images/${imageFiles[currentIndex]}`;
                 modal.style.display = 'flex';
                 updateImageNumber();
+                document.body.style.overflow = 'hidden'; 
             });
             gallerySection.appendChild(imgElement);
         });
 
-        // Zufällige Platzierung der Bildnummer
         function updateImageNumber() {
             const imgNum = imageFiles.length - 1 - currentIndex;
             const prefix = currentLang === 'en' ? 'Image' : 'Bild';
@@ -293,8 +309,13 @@
             imageNumberEl.style.top = `${randomY}vh`;
         }
 
-        // Vollbild Navigation
-        document.getElementById('close-btn').addEventListener('click', () => modal.style.display = 'none');
+        function closeFullscreen() {
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+
+        document.getElementById('close-btn').addEventListener('click', closeFullscreen);
+        
         document.getElementById('nav-right').addEventListener('click', () => {
             currentIndex = (currentIndex + 1) % imageFiles.length;
             modalImg.src = `images/${imageFiles[currentIndex]}`;
@@ -310,7 +331,7 @@
             if (modal.style.display === 'flex') {
                 if (event.key === 'ArrowRight') document.getElementById('nav-right').click();
                 if (event.key === 'ArrowLeft') document.getElementById('nav-left').click();
-                if (event.key === 'Escape') modal.style.display = 'none';
+                if (event.key === 'Escape') closeFullscreen();
             }
         });
 
@@ -326,7 +347,6 @@
             }
         });
 
-        // Start
         updateLangUI();
     </script>
 </body>
