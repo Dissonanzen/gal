@@ -33,6 +33,11 @@
             font-family: sans-serif;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
+        
+        /* Body Scroll blockieren für Vollbild */
+        body.no-scroll {
+            overflow: hidden;
+        }
 
         nav {
             position: fixed;
@@ -52,37 +57,46 @@
         .nav-left { 
             display: flex; 
             align-items: center; 
-            gap: 20px; 
+            gap: 15px; 
             font-weight: bold; 
             font-size: 1.2rem; 
         }
         
-        .nav-right { display: flex; gap: 20px; align-items: center; }
-        
+        .nav-right { display: flex; gap: 15px; align-items: center; }
         .nav-link { 
             cursor: pointer; 
             text-decoration: none; 
             color: var(--text-color); 
+            position: relative;
             padding-bottom: 2px;
-            border-bottom: 1px solid transparent;
-            transition: border-color 0.2s ease;
         }
         
-        .nav-link.active { 
-            border-bottom: 1px solid var(--text-color);
+        /* Elegante Unterstreichung */
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 1px;
+            bottom: 0;
+            left: 0;
+            background-color: var(--text-color);
+            transform: scaleX(0);
+            transition: transform 0.2s ease;
+        }
+        .nav-link:hover::after, .nav-link.active::after {
+            transform: scaleX(1);
         }
 
-        /* Neue, ästhetische Buttons */
+        /* Eckige, minimalistische Buttons */
         button {
             background: transparent;
             border: 1px solid var(--text-color);
             color: var(--text-color);
-            padding: 6px 14px;
+            padding: 5px 10px;
             cursor: pointer;
-            border-radius: 0; /* Streng eckig */
-            font-size: 0.8rem;
+            border-radius: 0;
+            font-size: 0.85rem;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
             transition: all 0.2s ease;
         }
 
@@ -96,34 +110,56 @@
             padding: 20px;
         }
 
-        /* Strenges 4-Spalten Grid-Layout mit etwas mehr Abstand */
-        #gallery-section {
+        /* Strenges Grid-Layout für beide Galerien */
+        .gallery-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 10px; /* Leicht vergrößerter Abstand */
+            gap: 10px; /* Dünne Abstände */
             align-items: start;
             justify-items: start;
         }
 
-        #gallery-section img {
-            width: 100%; 
-            height: auto; 
+        .gallery-grid img {
+            width: 100%;
+            height: auto;
             display: block;
             cursor: zoom-in;
             transition: opacity 0.2s ease;
         }
 
-        #gallery-section img:hover { opacity: 0.8; }
+        .gallery-grid img:hover { opacity: 0.8; }
 
-        #text-section {
-            display: none;
+        .text-content {
             max-width: 800px;
-            margin: 0 auto;
+            margin: 40px auto 0 auto;
             line-height: 1.6;
             white-space: pre-wrap;
             font-size: 1.1rem;
         }
 
+        /* Sektionen */
+        #gallery-section { display: grid; } /* Startansicht */
+        #text-section, #tbd-section, #tbd-content { display: none; }
+
+        /* TBD Lock Screen */
+        #tbd-section {
+            /* Positioniert das Rechteck oben links (unter der Navbar) */
+            padding-top: 10px;
+        }
+
+        /* Minimalistisches Rechteck, keine Effekte */
+        #password-input {
+            width: 150px;
+            padding: 8px;
+            font-size: 1rem;
+            font-family: monospace;
+            border: 1px solid var(--text-color);
+            background: transparent;
+            color: var(--text-color);
+            outline: none;
+        }
+
+        /* Vollbild Modus */
         #fullscreen-modal {
             display: none;
             position: fixed;
@@ -165,15 +201,6 @@
             z-index: 1002;
             pointer-events: none;
         }
-
-        @media (max-width: 768px) {
-            #gallery-section {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .nav-left, .nav-right {
-                gap: 10px;
-            }
-        }
     </style>
 </head>
 <body>
@@ -186,13 +213,28 @@
         <div class="nav-right">
             <span class="nav-link active" id="link-bilder">Bilder</span>
             <span class="nav-link" id="link-texte">Texte</span>
+            <span class="nav-link" id="link-tbd">tbd</span>
             <button id="theme-toggle">Dark Mode</button>
         </div>
     </nav>
 
     <main>
-        <section id="gallery-section"></section>
-        <section id="text-section"></section>
+        <!-- Standard Bilder -->
+        <section id="gallery-section" class="gallery-grid"></section>
+        
+        <!-- Standard Texte -->
+        <section id="text-section" class="text-content"></section>
+
+        <!-- TBD Bereich -->
+        <section id="tbd-section">
+            <input type="text" id="password-input" autocomplete="off">
+        </section>
+
+        <!-- Geheimer TBD Content (Bilder + Text drunter) -->
+        <section id="tbd-content">
+            <div id="tbd-gallery" class="gallery-grid"></div>
+            <div id="tbd-text" class="text-content"></div>
+        </section>
     </main>
 
     <div id="fullscreen-modal">
@@ -204,20 +246,37 @@
     </div>
 
     <script>
-        // BILDER LISTE
+        // --- KONFIGURATION ---
+        const secretPassword = "dein_passwort_hier"; // HIER PASSWORT ÄNDERN
+
         const imageFiles = [
             "bild1.JPG", "bild2.JPG", "3.JPG", "4.JPG", "5.JPG", 
             "6.JPG", "7.JPG", "8.JPG", "9.JPG", "10.JPG", 
             "11.JPG", "13.JPG", "14.JPG", "P9113375.JPG", "P9113348.JPG", 
-            "P9113325.JPG", "P9063241.JPG","P9063234.JPG", "P9063162.JPG", "P9063161.JPG", 
-            "P9053138.JPG", "P9053112.JPG", "P9053081.JPG", "P9053039.JPG", "P9042945.JPG", 
-            "P9042917.JPG", "P9042852.JPG", "P9042777.JPG", "P9022733.JPG", "P9022714.JPG"
+            "P9113325.JPG", "P9063241.JPG","P9063234.JPG", "P9063162.JPG", 
+            "P9063161.JPG", "P9053138.JPG", "P9053112.JPG", "P9053081.JPG", 
+            "P9053039.JPG", "P9042945.JPG", "P9042917.JPG", "P9042852.JPG", 
+            "P9042777.JPG", "P9022733.JPG", "P9022714.JPG"
         ];
         
+        const tbdImages = [
+            // "geheim1.jpg",
+            // "geheim2.jpg"
+        ];
+        
+        // --- ELEMENTE ---
         const gallerySection = document.getElementById('gallery-section');
         const textSection = document.getElementById('text-section');
+        const tbdSection = document.getElementById('tbd-section');
+        const tbdContent = document.getElementById('tbd-content');
+        const tbdGallery = document.getElementById('tbd-gallery');
+        const tbdText = document.getElementById('tbd-text');
+        const passwordInput = document.getElementById('password-input');
+        
         const linkBilder = document.getElementById('link-bilder');
         const linkTexte = document.getElementById('link-texte');
+        const linkTbd = document.getElementById('link-tbd');
+        
         const themeToggle = document.getElementById('theme-toggle');
         const langToggle = document.getElementById('lang-toggle');
         
@@ -225,39 +284,92 @@
         const modalImg = document.getElementById('fullscreen-img');
         const imageNumberEl = document.getElementById('image-number');
         
-        let currentIndex = 0;
-        
-        // SPRACH-LOGIK
+        // --- STATUS VARIABLEN ---
         let currentLang = navigator.language.toLowerCase().startsWith('en') ? 'en' : 'de';
+        let currentIndex = 0;
+        let activeImageArray = imageFiles; // Speichert, ob wir gerade in der normalen oder geheimen Galerie blättern
+        let tbdUnlocked = false;
 
-        function processReferences(text) {
-            return text.replace(/\\ref\{([^}]+)\}/g, (match, filename) => {
-                const cleanFilename = filename.trim();
-                const index = imageFiles.indexOf(cleanFilename);
-                if (index !== -1) {
-                    return imageFiles.length - 1 - index;
+        // --- HILFSFUNKTIONEN ---
+        function setActiveTab(clickedLink) {
+            [linkBilder, linkTexte, linkTbd].forEach(link => link.classList.remove('active'));
+            clickedLink.classList.add('active');
+            
+            gallerySection.style.display = 'none';
+            textSection.style.display = 'none';
+            tbdSection.style.display = 'none';
+            tbdContent.style.display = 'none';
+        }
+
+        // --- PASSWORT LOGIK ---
+        passwordInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                if (passwordInput.value === secretPassword) {
+                    tbdUnlocked = true;
+                    tbdSection.style.display = 'none';
+                    tbdContent.style.display = 'block';
+                    loadTextFile(tbdText, currentLang === 'en' ? 'textstbd.txt' : 'texttbd.txt');
                 }
-                return `[Bild '${cleanFilename}' nicht gefunden]`;
+                // Wenn falsch: Keine Reaktion, kein rotes Aufblitzen, einfach nichts.
+            }
+        });
+
+        // --- NAVIGATION ---
+        linkBilder.addEventListener('click', () => {
+            setActiveTab(linkBilder);
+            gallerySection.style.display = 'grid';
+            activeImageArray = imageFiles;
+        });
+
+        linkTexte.addEventListener('click', () => {
+            setActiveTab(linkTexte);
+            textSection.style.display = 'block';
+        });
+
+        linkTbd.addEventListener('click', () => {
+            setActiveTab(linkTbd);
+            activeImageArray = tbdImages;
+            if (tbdUnlocked) {
+                tbdContent.style.display = 'block';
+            } else {
+                tbdSection.style.display = 'block';
+                passwordInput.value = ''; // Feld leeren bei neuem Aufruf
+                passwordInput.focus();
+            }
+        });
+
+        // --- TEXTE & \ref{} PARSER ---
+        function parseRefs(text) {
+            return text.replace(/\\ref\{([^}]+)\}/g, (match, filename) => {
+                let imgNum = imageFiles.length - 1 - imageFiles.indexOf(filename);
+                if (imageFiles.indexOf(filename) === -1) {
+                    imgNum = tbdImages.length - 1 - tbdImages.indexOf(filename);
+                }
+                return imgNum !== -1 ? imgNum : "[Bild nicht gefunden]";
             });
         }
 
-        function updateLangUI() {
-            langToggle.innerText = currentLang === 'en' ? 'EN' : 'DE';
-            
-            const filename = currentLang === 'en' ? 'texts.txt' : 'texte.txt';
+        function loadTextFile(targetElement, filename) {
             fetch(filename)
                 .then(response => {
                     if (!response.ok) throw new Error("Datei nicht gefunden");
                     return response.text();
                 })
                 .then(text => {
-                    const processedText = processReferences(text);
-                    textSection.textContent = processedText;
-                    if (window.MathJax) MathJax.typesetPromise([textSection]);
+                    targetElement.textContent = parseRefs(text);
+                    if (window.MathJax) MathJax.typesetPromise([targetElement]);
                 })
                 .catch(error => {
-                    textSection.textContent = `Hinweis: Lade eine Datei namens '${filename}' hoch.\n\n(Wenn du dies lokal auf deinem PC siehst: Dein Browser blockiert das Auslesen der Textdatei aus Sicherheitsgründen. Lade die Dateien auf GitHub hoch, dann funktioniert es automatisch!)`;
+                    targetElement.textContent = `Hinweis: Lade '${filename}' hoch.`;
                 });
+        }
+
+        function updateLangUI() {
+            langToggle.innerText = currentLang === 'en' ? 'EN' : 'DE';
+            loadTextFile(textSection, currentLang === 'en' ? 'texts.txt' : 'texte.txt');
+            if (tbdUnlocked) {
+                loadTextFile(tbdText, currentLang === 'en' ? 'textstbd.txt' : 'texttbd.txt');
+            }
         }
 
         langToggle.addEventListener('click', () => {
@@ -266,38 +378,30 @@
             if(modal.style.display === 'flex') updateImageNumber(); 
         });
 
-        // Tab Navigation
-        linkBilder.addEventListener('click', () => {
-            gallerySection.style.display = 'grid'; 
-            textSection.style.display = 'none';
-            linkBilder.classList.add('active');
-            linkTexte.classList.remove('active');
-        });
-
-        linkTexte.addEventListener('click', () => {
-            gallerySection.style.display = 'none';
-            textSection.style.display = 'block';
-            linkTexte.classList.add('active');
-            linkBilder.classList.remove('active');
-        });
-
-        // Galerie generieren
-        imageFiles.forEach((filename, index) => {
-            const imgElement = document.createElement('img');
-            imgElement.src = `images/${filename}`;
-            imgElement.alt = filename;
-            imgElement.addEventListener('click', () => {
-                currentIndex = index;
-                modalImg.src = `images/${imageFiles[currentIndex]}`;
-                modal.style.display = 'flex';
-                updateImageNumber();
-                document.body.style.overflow = 'hidden'; 
+        // --- GALERIE GENERIEREN ---
+        function createGallery(imgArray, container) {
+            imgArray.forEach((filename, index) => {
+                const imgElement = document.createElement('img');
+                imgElement.src = `images/${filename}`;
+                imgElement.alt = filename;
+                imgElement.addEventListener('click', () => {
+                    activeImageArray = imgArray;
+                    currentIndex = index;
+                    modalImg.src = `images/${activeImageArray[currentIndex]}`;
+                    modal.style.display = 'flex';
+                    document.body.classList.add('no-scroll');
+                    updateImageNumber();
+                });
+                container.appendChild(imgElement);
             });
-            gallerySection.appendChild(imgElement);
-        });
+        }
 
+        createGallery(imageFiles, gallerySection);
+        createGallery(tbdImages, tbdGallery);
+
+        // --- VOLLBILD LOGIK ---
         function updateImageNumber() {
-            const imgNum = imageFiles.length - 1 - currentIndex;
+            const imgNum = activeImageArray.length - 1 - currentIndex;
             const prefix = currentLang === 'en' ? 'Image' : 'Bild';
             imageNumberEl.innerText = `${prefix}: ${imgNum}`;
             
@@ -311,19 +415,22 @@
 
         function closeFullscreen() {
             modal.style.display = 'none';
-            document.body.style.overflow = '';
+            document.body.classList.remove('no-scroll');
         }
 
         document.getElementById('close-btn').addEventListener('click', closeFullscreen);
         
         document.getElementById('nav-right').addEventListener('click', () => {
-            currentIndex = (currentIndex + 1) % imageFiles.length;
-            modalImg.src = `images/${imageFiles[currentIndex]}`;
+            if(activeImageArray.length === 0) return;
+            currentIndex = (currentIndex + 1) % activeImageArray.length;
+            modalImg.src = `images/${activeImageArray[currentIndex]}`;
             updateImageNumber();
         });
+        
         document.getElementById('nav-left').addEventListener('click', () => {
-            currentIndex = (currentIndex - 1 + imageFiles.length) % imageFiles.length;
-            modalImg.src = `images/${imageFiles[currentIndex]}`;
+            if(activeImageArray.length === 0) return;
+            currentIndex = (currentIndex - 1 + activeImageArray.length) % activeImageArray.length;
+            modalImg.src = `images/${activeImageArray[currentIndex]}`;
             updateImageNumber();
         });
 
@@ -335,7 +442,7 @@
             }
         });
 
-        // Dark Mode
+        // --- DARK MODE ---
         themeToggle.addEventListener('click', () => {
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             if (isDark) {
@@ -347,6 +454,7 @@
             }
         });
 
+        // --- INIT ---
         updateLangUI();
     </script>
 </body>
