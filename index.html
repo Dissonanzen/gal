@@ -276,9 +276,10 @@
     <script>
         const secretKey = "agave";
 
-        const imageFiles = [["P9224324.JPG",""], ["P9204094.JPG",""]
-            ["bild1.JPG", "Ein kleines Zitat hier. <a href='https://github.com' target='_blank'>Mein Link</a>"],
-            ["bild2.JPG", "Nur Text ohne Link."],
+        const imageFiles = [["P9224324.JPG",""], 
+                            ["P9204094.JPG",""],
+            ["bild1.JPG", ""], //"Ein kleines Zitat hier. <a href='https://github.com' target='_blank'>Mein Link</a>"
+            ["bild2.JPG", ""],
             ["3.JPG", ""],
             ["4.JPG", ""],
             ["5.JPG", ""],
@@ -290,7 +291,7 @@
             ["11.JPG", ""],
             ["13.JPG", ""],
             ["14.JPG", ""],
-            ["P9113375.JPG", "Ein cooles Foto aus den Bergen."],
+            ["P9113375.JPG", ""],
             ["P9113348.JPG", ""],
             ["P9113325.JPG", ""],
             ["P9063241.JPG", ""],
@@ -306,7 +307,7 @@
             ["P9042852.JPG", ""],
             ["P9042777.JPG", ""],
             ["P9022733.JPG", ""],
-            ["P9022714.JPG", "Das letzte Bild in der Liste."],
+            ["P9022714.JPG", ""],
             ["P9204078.JPG","P9224149.JPG"],
             ["P9224149.JPG","P9224149.JPG"]
         ];
@@ -383,11 +384,11 @@
             langToggle.innerText = currentLang === 'en' ? 'EN' : 'DE';
             
             // TITEL SPRACHABHÄNGIG ANPASSEN
-            document.title = currentLang === 'en' ? 'My Gallery' : 'Meine Galerie';
+            document.title = currentLang === 'en' ? 'a few photos' : 'n paar bilder';
             
             loadTextFile(currentLang === 'en' ? 'texts.txt' : 'texte.txt', textSection);
             if (isTbdUnlocked) {
-                loadTextFile(currentLang === 'en' ? 'textstbd.txt' : 'texttbd.txt', tbdText);
+                loadTextFile(currentLang === 'en' ? 'textstbd.txt' : 'textstbd.txt', tbdText);
             }
         }
 
