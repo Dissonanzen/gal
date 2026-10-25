@@ -34,7 +34,6 @@
             transition: background-color 0.3s ease, color 0.3s ease;
         }
         
-        /* Body Scroll blockieren für Vollbild */
         body.no-scroll {
             overflow: hidden;
         }
@@ -63,46 +62,51 @@
         }
         
         .nav-right { display: flex; gap: 15px; align-items: center; }
+        
         .nav-link { 
             cursor: pointer; 
             text-decoration: none; 
             color: var(--text-color); 
             position: relative;
-            padding-bottom: 2px;
         }
         
-        /* Elegante Unterstreichung */
         .nav-link::after {
             content: '';
             position: absolute;
             width: 100%;
+            transform: scaleX(0);
             height: 1px;
-            bottom: 0;
+            bottom: -2px;
             left: 0;
             background-color: var(--text-color);
-            transform: scaleX(0);
-            transition: transform 0.2s ease;
+            transform-origin: bottom right;
+            transition: transform 0.25s ease-out;
         }
         .nav-link:hover::after, .nav-link.active::after {
             transform: scaleX(1);
+            transform-origin: bottom left;
         }
 
-        /* Eckige, minimalistische Buttons */
         button {
-            background: transparent;
+            background: none;
             border: 1px solid var(--text-color);
             color: var(--text-color);
             padding: 5px 10px;
             cursor: pointer;
-            border-radius: 0;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            transition: all 0.2s ease;
+            border-radius: 0; 
+            font-size: 0.8rem;
+            text-transform: uppercase; 
+            transition: background-color 0.2s ease, color 0.2s ease;
         }
 
         button:hover {
             background-color: var(--text-color);
             color: var(--bg-color);
+        }
+        
+        /* Der Sprach-Button ist standardmäßig versteckt */
+        #lang-toggle {
+            display: none;
         }
 
         main {
@@ -110,13 +114,38 @@
             padding: 20px;
         }
 
-        /* Strenges Grid-Layout für beide Galerien */
+        #key-form {
+            position: fixed;
+            top: 75px;
+            left: 20px;
+            z-index: 99;
+        }
+
+        #key-input {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--nav-border);
+            color: var(--text-color);
+            outline: none;
+            width: 100px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            padding: 2px 0;
+        }
+
         .gallery-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px; /* Dünne Abstände */
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px; 
             align-items: start;
             justify-items: start;
+        }
+
+        @media (min-width: 768px) {
+            .gallery-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 10px;
+            }
         }
 
         .gallery-grid img {
@@ -131,35 +160,20 @@
 
         .text-content {
             max-width: 800px;
-            margin: 40px auto 0 auto;
+            margin: 0 auto;
             line-height: 1.6;
             white-space: pre-wrap;
             font-size: 1.1rem;
+            padding-bottom: 50px;
         }
 
-        /* Sektionen */
-        #gallery-section { display: grid; } /* Startansicht */
-        #text-section, #tbd-section, #tbd-content { display: none; }
-
-        /* TBD Lock Screen */
-        #tbd-section {
-            /* Positioniert das Rechteck oben links (unter der Navbar) */
-            padding-top: 10px;
-        }
-
-        /* Minimalistisches Rechteck, keine Effekte */
-        #password-input {
-            width: 150px;
-            padding: 8px;
-            font-size: 1rem;
-            font-family: monospace;
-            border: 1px solid var(--text-color);
-            background: transparent;
+        #gallery-section, #text-section, #tbd-area { display: none; }
+        
+        a {
             color: var(--text-color);
-            outline: none;
+            text-decoration: underline;
         }
 
-        /* Vollbild Modus */
         #fullscreen-modal {
             display: none;
             position: fixed;
@@ -179,7 +193,7 @@
             object-fit: contain;
         }
 
-        .nav-area { position: absolute; top: 0; width: 40%; height: 100%; cursor: pointer; }
+        .nav-area { position: absolute; top: 0; width: 40%; height: 100%; cursor: pointer; z-index: 1001; }
         #nav-left { left: 0; cursor: w-resize; }
         #nav-right { right: 0; cursor: e-resize; }
         
@@ -189,17 +203,36 @@
             right: 30px;
             font-size: 30px;
             cursor: pointer;
-            z-index: 1001;
+            z-index: 1004;
             color: var(--text-color);
+            mix-blend-mode: difference;
         }
 
         #image-number {
             position: absolute;
             font-size: 1.2rem;
             font-family: monospace;
-            color: var(--text-color);
+            color: #ffffff; 
+            mix-blend-mode: difference;
             z-index: 1002;
             pointer-events: none;
+        }
+
+        #image-text {
+            position: absolute;
+            font-size: 1rem;
+            color: var(--text-color);
+            z-index: 1005; 
+            pointer-events: auto;
+            max-width: 90vw; 
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        @media (min-width: 768px) {
+            #image-text {
+                max-width: 15vw; 
+            }
         }
     </style>
 </head>
@@ -208,7 +241,7 @@
     <nav>
         <div class="nav-left">
             Mein Name
-            <button id="lang-toggle">DE / EN</button>
+            <button id="lang-toggle">DE</button>
         </div>
         <div class="nav-right">
             <span class="nav-link active" id="link-bilder">Bilder</span>
@@ -219,229 +252,345 @@
     </nav>
 
     <main>
-        <!-- Standard Bilder -->
         <section id="gallery-section" class="gallery-grid"></section>
-        
-        <!-- Standard Texte -->
         <section id="text-section" class="text-content"></section>
 
-        <!-- TBD Bereich -->
-        <section id="tbd-section">
-            <input type="text" id="password-input" autocomplete="off">
-        </section>
-
-        <!-- Geheimer TBD Content (Bilder + Text drunter) -->
-        <section id="tbd-content">
+        <section id="tbd-area">
+            <form id="key-form">
+                <input type="text" id="key-input" autocomplete="off" spellcheck="false">
+            </form>
             <div id="tbd-gallery" class="gallery-grid"></div>
-            <div id="tbd-text" class="text-content"></div>
+            <div id="tbd-text" class="text-content" style="margin-top: 50px;"></div>
         </section>
     </main>
 
     <div id="fullscreen-modal">
         <span id="close-btn">&times;</span>
         <div id="image-number"></div>
+        <div id="image-text"></div>
         <div id="nav-left" class="nav-area"></div>
         <img id="fullscreen-img" src="" alt="Vollbild">
         <div id="nav-right" class="nav-area"></div>
     </div>
 
     <script>
-        // --- KONFIGURATION ---
-        const secretPassword = "agave";
+        const secretKey = "agave";
 
-        const imageFiles = ["P9224324.JPG","P9204094.JPG",
-            "bild1.JPG", "bild2.JPG", "3.JPG", "4.JPG", "5.JPG", 
-            "6.JPG", "7.JPG", "8.JPG", "9.JPG", "10.JPG", 
-            "11.JPG", "13.JPG", "14.JPG", "P9113375.JPG", "P9113348.JPG", 
-            "P9113325.JPG", "P9063241.JPG","P9063234.JPG", "P9063162.JPG", 
-            "P9063161.JPG", "P9053138.JPG", "P9053112.JPG", "P9053081.JPG", 
-            "P9053039.JPG", "P9042945.JPG", "P9042917.JPG", "P9042852.JPG", 
-            "P9042777.JPG", "P9022733.JPG", "P9022714.JPG","P9204078.JPG","P9224149.JPG"
+        const imageFiles = [["P9224324.JPG",""], ["P9204094.JPG",""]
+            ["bild1.JPG", "Ein kleines Zitat hier. <a href='https://github.com' target='_blank'>Mein Link</a>"],
+            ["bild2.JPG", "Nur Text ohne Link."],
+            ["3.JPG", ""],
+            ["4.JPG", ""],
+            ["5.JPG", ""],
+            ["6.JPG", ""],
+            ["7.JPG", ""],
+            ["8.JPG", ""],
+            ["9.JPG", ""],
+            ["10.JPG", ""],
+            ["11.JPG", ""],
+            ["13.JPG", ""],
+            ["14.JPG", ""],
+            ["P9113375.JPG", "Ein cooles Foto aus den Bergen."],
+            ["P9113348.JPG", ""],
+            ["P9113325.JPG", ""],
+            ["P9063241.JPG", ""],
+            ["P9063234.JPG", ""],
+            ["P9063162.JPG", ""],
+            ["P9063161.JPG", ""],
+            ["P9053138.JPG", ""],
+            ["P9053112.JPG", ""],
+            ["P9053081.JPG", ""],
+            ["P9053039.JPG", ""],
+            ["P9042945.JPG", ""],
+            ["P9042917.JPG", ""],
+            ["P9042852.JPG", ""],
+            ["P9042777.JPG", ""],
+            ["P9022733.JPG", ""],
+            ["P9022714.JPG", "Das letzte Bild in der Liste."],
+            ["P9204078.JPG","P9224149.JPG"],
+            ["P9224149.JPG","P9224149.JPG"]
         ];
+
+
+
+        const tbdImages = [];
         
-        const tbdImages = [
-            // "geheim1.jpg",
-            // "geheim2.jpg"
-        ];
-        
-        // --- ELEMENTE ---
         const gallerySection = document.getElementById('gallery-section');
         const textSection = document.getElementById('text-section');
-        const tbdSection = document.getElementById('tbd-section');
-        const tbdContent = document.getElementById('tbd-content');
+        const tbdArea = document.getElementById('tbd-area');
         const tbdGallery = document.getElementById('tbd-gallery');
         const tbdText = document.getElementById('tbd-text');
-        const passwordInput = document.getElementById('password-input');
         
         const linkBilder = document.getElementById('link-bilder');
         const linkTexte = document.getElementById('link-texte');
         const linkTbd = document.getElementById('link-tbd');
-        
         const themeToggle = document.getElementById('theme-toggle');
         const langToggle = document.getElementById('lang-toggle');
         
         const modal = document.getElementById('fullscreen-modal');
         const modalImg = document.getElementById('fullscreen-img');
         const imageNumberEl = document.getElementById('image-number');
+        const imageTextEl = document.getElementById('image-text');
         
-        // --- STATUS VARIABLEN ---
-        let currentLang = navigator.language.toLowerCase().startsWith('en') ? 'en' : 'de';
+        const keyForm = document.getElementById('key-form');
+        const keyInput = document.getElementById('key-input');
+        
         let currentIndex = 0;
-        let activeImageArray = imageFiles; // Speichert, ob wir gerade in der normalen oder geheimen Galerie blättern
-        let tbdUnlocked = false;
+        let isTbdMode = false;
+        let isTbdUnlocked = false;
+        
+        let currentLang = navigator.language.toLowerCase().startsWith('en') ? 'en' : 'de';
 
-        // --- HILFSFUNKTIONEN ---
-        function setActiveTab(clickedLink) {
-            [linkBilder, linkTexte, linkTbd].forEach(link => link.classList.remove('active'));
-            clickedLink.classList.add('active');
-            
-            gallerySection.style.display = 'none';
-            textSection.style.display = 'none';
-            tbdSection.style.display = 'none';
-            tbdContent.style.display = 'none';
-        }
-
-        // --- PASSWORT LOGIK ---
-        passwordInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                if (passwordInput.value === secretPassword) {
-                    tbdUnlocked = true;
-                    tbdSection.style.display = 'none';
-                    tbdContent.style.display = 'block';
-                    loadTextFile(tbdText, currentLang === 'en' ? 'textstbd.txt' : 'texttbd.txt');
+        function parseReferences(rawText) {
+            return rawText.replace(/\\ref\{([^}]+)\}/g, (match, filename) => {
+                let index = imageFiles.findIndex(item => item[0] === filename);
+                let prefix = currentLang === 'en' ? 'Image' : 'Bild';
+                let tbdStr = "";
+                
+                if (index === -1) {
+                    index = tbdImages.findIndex(item => item[0] === filename);
+                    if (index !== -1) {
+                        index = tbdImages.length - 1 - index;
+                        tbdStr = "tbd";
+                    }
+                } else {
+                    index = imageFiles.length - 1 - index;
                 }
-            }
-        });
 
-        // --- NAVIGATION ---
-        linkBilder.addEventListener('click', () => {
-            setActiveTab(linkBilder);
-            gallerySection.style.display = 'grid';
-            activeImageArray = imageFiles;
-        });
-
-        linkTexte.addEventListener('click', () => {
-            setActiveTab(linkTexte);
-            textSection.style.display = 'block';
-        });
-
-        linkTbd.addEventListener('click', () => {
-            setActiveTab(linkTbd);
-            activeImageArray = tbdImages;
-            if (tbdUnlocked) {
-                tbdContent.style.display = 'block';
-            } else {
-                tbdSection.style.display = 'block';
-                passwordInput.value = ''; // Feld leeren bei neuem Aufruf
-                passwordInput.focus();
-            }
-        });
-
-        // --- TEXTE & \ref{} PARSER ---
-        function parseRefs(text) {
-            return text.replace(/\\ref\{([^}]+)\}/g, (match, filename) => {
-                let imgNum = imageFiles.length - 1 - imageFiles.indexOf(filename);
-                if (imageFiles.indexOf(filename) === -1) {
-                    imgNum = tbdImages.length - 1 - tbdImages.indexOf(filename);
+                if (index !== -1) {
+                    return `${prefix}: ${tbdStr}${index}`;
                 }
-                return imgNum !== -1 ? imgNum : "[Bild nicht gefunden]";
+                return match;
             });
         }
 
-        function loadTextFile(targetElement, filename) {
+        function loadTextFile(filename, element) {
             fetch(filename)
                 .then(response => {
                     if (!response.ok) throw new Error("Datei nicht gefunden");
                     return response.text();
                 })
                 .then(text => {
-                    targetElement.textContent = parseRefs(text);
-                    if (window.MathJax) MathJax.typesetPromise([targetElement]);
+                    element.innerHTML = parseReferences(text);
+                    if (window.MathJax) MathJax.typesetPromise([element]);
                 })
                 .catch(error => {
-                    targetElement.textContent = `Hinweis: Lade '${filename}' hoch.`;
+                    element.innerHTML = `Hinweis: Datei '${filename}' nicht gefunden.`;
                 });
         }
 
         function updateLangUI() {
             langToggle.innerText = currentLang === 'en' ? 'EN' : 'DE';
-            loadTextFile(textSection, currentLang === 'en' ? 'texts.txt' : 'texte.txt');
-            if (tbdUnlocked) {
-                loadTextFile(tbdText, currentLang === 'en' ? 'textstbd.txt' : 'texttbd.txt');
+            
+            // TITEL SPRACHABHÄNGIG ANPASSEN
+            document.title = currentLang === 'en' ? 'My Gallery' : 'Meine Galerie';
+            
+            loadTextFile(currentLang === 'en' ? 'texts.txt' : 'texte.txt', textSection);
+            if (isTbdUnlocked) {
+                loadTextFile(currentLang === 'en' ? 'textstbd.txt' : 'texttbd.txt', tbdText);
             }
         }
 
         langToggle.addEventListener('click', () => {
             currentLang = currentLang === 'en' ? 'de' : 'en';
             updateLangUI();
-            if(modal.style.display === 'flex') updateImageNumber(); 
+            if (modal.style.display === 'flex') updateFullscreenMeta(); 
         });
 
-        // --- GALERIE GENERIEREN ---
-        function createGallery(imgArray, container) {
-            imgArray.forEach((filename, index) => {
+        function resetNav() {
+            linkBilder.classList.remove('active');
+            linkTexte.classList.remove('active');
+            linkTbd.classList.remove('active');
+            gallerySection.style.display = 'none';
+            textSection.style.display = 'none';
+            tbdArea.style.display = 'none';
+            keyForm.style.display = 'none';
+            
+            // Sprachbutton standardmäßig auf anderen Seiten verstecken
+            langToggle.style.display = 'none';
+            
+            isTbdMode = false;
+        }
+
+        linkBilder.addEventListener('click', () => {
+            resetNav();
+            linkBilder.classList.add('active');
+            gallerySection.style.display = 'grid';
+        });
+
+        linkTexte.addEventListener('click', () => {
+            resetNav();
+            linkTexte.classList.add('active');
+            textSection.style.display = 'block';
+            
+            // Sprachbutton nur hier anzeigen
+            langToggle.style.display = 'inline-block';
+        });
+
+        linkTbd.addEventListener('click', () => {
+            resetNav();
+            linkTbd.classList.add('active');
+            tbdArea.style.display = 'block';
+            isTbdMode = true;
+            
+            if (!isTbdUnlocked) {
+                keyForm.style.display = 'block';
+                tbdGallery.style.display = 'none';
+                tbdText.style.display = 'none';
+                keyInput.focus();
+            } else {
+                tbdGallery.style.display = 'grid';
+                tbdText.style.display = 'block';
+            }
+        });
+
+        keyForm.addEventListener('submit', (e) => {
+            e.preventDefault(); 
+            if (keyInput.value.toLowerCase() === secretKey.toLowerCase()) {
+                isTbdUnlocked = true;
+                keyForm.style.display = 'none';
+                tbdGallery.style.display = 'grid';
+                tbdText.style.display = 'block';
+                updateLangUI();
+            }
+        });
+
+        function renderGallery(dataArray, container) {
+            container.innerHTML = '';
+            dataArray.forEach((item, index) => {
+                const filename = item[0];
                 const imgElement = document.createElement('img');
                 imgElement.src = `images/${filename}`;
                 imgElement.alt = filename;
                 imgElement.addEventListener('click', () => {
-                    activeImageArray = imgArray;
                     currentIndex = index;
-                    modalImg.src = `images/${activeImageArray[currentIndex]}`;
-                    modal.style.display = 'flex';
-                    document.body.classList.add('no-scroll');
-                    updateImageNumber();
+                    openFullscreen();
                 });
                 container.appendChild(imgElement);
             });
         }
 
-        createGallery(imageFiles, gallerySection);
-        createGallery(tbdImages, tbdGallery);
+        renderGallery(imageFiles, gallerySection);
+        renderGallery(tbdImages, tbdGallery);
 
-        // --- VOLLBILD LOGIK ---
-        function updateImageNumber() {
-            const imgNum = activeImageArray.length - 1 - currentIndex;
-            const prefix = currentLang === 'en' ? 'Image' : 'Bild';
-            imageNumberEl.innerText = `${prefix}: ${imgNum}`;
-            
-            const isLeft = Math.random() > 0.5;
-            const randomX = isLeft ? Math.random() * 15 + 5 : Math.random() * 15 + 80;
-            const randomY = Math.random() * 80 + 10;
-            
-            imageNumberEl.style.left = `${randomX}vw`;
-            imageNumberEl.style.top = `${randomY}vh`;
+        resetNav();
+        linkBilder.click(); // Startet automatisch auf der Bilder-Seite
+
+        function openFullscreen() {
+            modal.style.display = 'flex';
+            document.body.classList.add('no-scroll');
+            updateFullscreenMeta();
         }
 
-        function closeFullscreen() {
+        function updateFullscreenMeta() {
+            const currentArray = isTbdMode ? tbdImages : imageFiles;
+            if (currentArray.length === 0) return;
+            
+            const currentItem = currentArray[currentIndex];
+            const filename = currentItem[0];
+            const captionText = currentItem[1]; 
+
+            modalImg.src = `images/${filename}`;
+            
+            const imgNum = currentArray.length - 1 - currentIndex;
+            const prefix = currentLang === 'en' ? 'Image' : 'Bild';
+            const tbdStr = isTbdMode ? 'tbd' : '';
+            imageNumberEl.innerText = `${prefix}: ${tbdStr}${imgNum}`;
+            
+            const isMobile = window.innerWidth <= 768;
+            
+            if (isMobile) {
+                const isTop = Math.random() > 0.5;
+                imageNumberEl.style.left = '50vw';
+                imageNumberEl.style.transform = 'translateX(-50%)'; 
+                imageNumberEl.style.top = isTop ? '15vh' : '85vh';
+                
+                if (captionText && captionText.trim() !== "") {
+                    imageTextEl.innerHTML = captionText;
+                    imageTextEl.style.display = 'block';
+                    
+                    imageTextEl.style.transform = 'none'; 
+                    imageTextEl.style.left = '5vw';
+                    imageTextEl.style.right = '5vw';
+                    imageTextEl.style.textAlign = 'center';
+                    
+                    imageTextEl.style.top = isTop ? '75vh' : '20vh';
+                } else {
+                    imageTextEl.style.display = 'none';
+                }
+                
+            } else {
+                imageNumberEl.style.transform = 'none'; 
+                
+                const isNumberLeft = Math.random() > 0.5;
+                const isOutside = Math.random() < 0.70;
+                
+                let numX;
+                if (isOutside) {
+                    numX = isNumberLeft ? Math.random() * 15 + 2 : Math.random() * 15 + 80;
+                } else {
+                    numX = Math.random() * 40 + 30; 
+                }
+                const numY = Math.random() * 80 + 10;
+                
+                imageNumberEl.style.left = `${numX}vw`;
+                imageNumberEl.style.top = `${numY}vh`;
+
+                if (captionText && captionText.trim() !== "") {
+                    imageTextEl.innerHTML = captionText;
+                    imageTextEl.style.display = 'block';
+                    imageTextEl.style.transform = 'none';
+                    
+                    const isTextLeft = Math.random() > 0.5;
+                    const textY = Math.random() * 80 + 10;
+                    imageTextEl.style.top = `${textY}vh`;
+                    
+                    if (isTextLeft) {
+                        const textX = Math.random() * 5 + 2; 
+                        imageTextEl.style.left = `${textX}vw`;
+                        imageTextEl.style.right = 'auto';
+                        imageTextEl.style.textAlign = 'left';
+                    } else {
+                        const textX = Math.random() * 5 + 2; 
+                        imageTextEl.style.right = `${textX}vw`;
+                        imageTextEl.style.left = 'auto';
+                        imageTextEl.style.textAlign = 'right';
+                    }
+                } else {
+                    imageTextEl.style.display = 'none';
+                }
+            }
+        }
+
+        document.getElementById('close-btn').addEventListener('click', () => {
             modal.style.display = 'none';
             document.body.classList.remove('no-scroll');
-        }
-
-        document.getElementById('close-btn').addEventListener('click', closeFullscreen);
-        
-        document.getElementById('nav-right').addEventListener('click', () => {
-            if(activeImageArray.length === 0) return;
-            currentIndex = (currentIndex + 1) % activeImageArray.length;
-            modalImg.src = `images/${activeImageArray[currentIndex]}`;
-            updateImageNumber();
         });
-        
+
+        document.getElementById('nav-right').addEventListener('click', () => {
+            const currentArray = isTbdMode ? tbdImages : imageFiles;
+            if(currentArray.length > 0) {
+                currentIndex = (currentIndex + 1) % currentArray.length;
+                updateFullscreenMeta();
+            }
+        });
+
         document.getElementById('nav-left').addEventListener('click', () => {
-            if(activeImageArray.length === 0) return;
-            currentIndex = (currentIndex - 1 + activeImageArray.length) % activeImageArray.length;
-            modalImg.src = `images/${activeImageArray[currentIndex]}`;
-            updateImageNumber();
+            const currentArray = isTbdMode ? tbdImages : imageFiles;
+            if(currentArray.length > 0) {
+                currentIndex = (currentIndex - 1 + currentArray.length) % currentArray.length;
+                updateFullscreenMeta();
+            }
         });
 
         document.addEventListener('keydown', (event) => {
             if (modal.style.display === 'flex') {
                 if (event.key === 'ArrowRight') document.getElementById('nav-right').click();
                 if (event.key === 'ArrowLeft') document.getElementById('nav-left').click();
-                if (event.key === 'Escape') closeFullscreen();
+                if (event.key === 'Escape') document.getElementById('close-btn').click();
             }
         });
 
-        // --- DARK MODE ---
         themeToggle.addEventListener('click', () => {
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             if (isDark) {
@@ -453,8 +602,13 @@
             }
         });
 
-        // --- INIT ---
         updateLangUI();
+        
+        window.addEventListener('resize', () => {
+            if(modal.style.display === 'flex') {
+                updateFullscreenMeta();
+            }
+        });
     </script>
 </body>
 </html>
