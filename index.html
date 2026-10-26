@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>n paar fotos </title>
+    <title>n paar fotos</title>
     
+    <!-- Metadaten Bibliothek (EXIF.js) für das Auslesen von Bild-Titeln -->
+    <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+
     <script>
     window.MathJax = {
       tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
@@ -104,7 +107,6 @@
             color: var(--bg-color);
         }
         
-        /* Der Sprach-Button ist standardmäßig versteckt */
         #lang-toggle {
             display: none;
         }
@@ -276,9 +278,10 @@
     <script>
         const secretKey = "agave";
 
-        const imageFiles = [["P9224324.JPG",""], 
-                            ["P9204094.JPG",""],
-            ["bild1.JPG", ""], //"Ein kleines Zitat hier. <a href='https://github.com' target='_blank'>Mein Link</a>"
+        const imageFiles = [
+            ["P9224324.JPG",""], 
+            ["P9204094.JPG",""],
+            ["bild1.JPG", ""], 
             ["bild2.JPG", ""],
             ["3.JPG", ""],
             ["4.JPG", ""],
@@ -308,11 +311,9 @@
             ["P9042777.JPG", ""],
             ["P9022733.JPG", ""],
             ["P9022714.JPG", ""],
-            ["P9204078.JPG","P9224149.JPG"],
+            ["P9204078.JPG","P9224149.JPG"], // Falls hier Text steht, überschreibt dieser immer die Dateieigenschaften!
             ["P9224149.JPG","P9224149.JPG"]
         ];
-
-
 
         const tbdImages = [];
         
@@ -383,8 +384,7 @@
         function updateLangUI() {
             langToggle.innerText = currentLang === 'en' ? 'EN' : 'DE';
             
-            // TITEL SPRACHABHÄNGIG ANPASSEN
-            document.title = currentLang === 'en' ? 'a few photos' : 'n paar bilder';
+            document.title = currentLang === 'en' ? 'a few photos' : 'n paar fotos';
             
             loadTextFile(currentLang === 'en' ? 'texts.txt' : 'texte.txt', textSection);
             if (isTbdUnlocked) {
@@ -407,9 +407,7 @@
             tbdArea.style.display = 'none';
             keyForm.style.display = 'none';
             
-            // Sprachbutton standardmäßig auf anderen Seiten verstecken
             langToggle.style.display = 'none';
-            
             isTbdMode = false;
         }
 
@@ -423,8 +421,6 @@
             resetNav();
             linkTexte.classList.add('active');
             textSection.style.display = 'block';
-            
-            // Sprachbutton nur hier anzeigen
             langToggle.style.display = 'inline-block';
         });
 
@@ -475,7 +471,7 @@
         renderGallery(tbdImages, tbdGallery);
 
         resetNav();
-        linkBilder.click(); // Startet automatisch auf der Bilder-Seite
+        linkBilder.click();
 
         function openFullscreen() {
             modal.style.display = 'flex';
@@ -489,43 +485,29 @@
             
             const currentItem = currentArray[currentIndex];
             const filename = currentItem[0];
-            const captionText = currentItem[1]; 
+            const manualCaptionText = currentItem[1]; // Text, falls du ihn doch mal manuell eintragen willst
 
             modalImg.src = `images/${filename}`;
             
+            // --- NUMMERIERUNG BERECHNEN ---
             const imgNum = currentArray.length - 1 - currentIndex;
             const prefix = currentLang === 'en' ? 'Image' : 'Bild';
             const tbdStr = isTbdMode ? 'tbd' : '';
             imageNumberEl.innerText = `${prefix}: ${tbdStr}${imgNum}`;
             
             const isMobile = window.innerWidth <= 768;
+            let mobileIsTop = false;
             
+            // --- NUMMER POSITIONIEREN ---
             if (isMobile) {
-                const isTop = Math.random() > 0.5;
+                mobileIsTop = Math.random() > 0.5;
                 imageNumberEl.style.left = '50vw';
                 imageNumberEl.style.transform = 'translateX(-50%)'; 
-                imageNumberEl.style.top = isTop ? '15vh' : '85vh';
-                
-                if (captionText && captionText.trim() !== "") {
-                    imageTextEl.innerHTML = captionText;
-                    imageTextEl.style.display = 'block';
-                    
-                    imageTextEl.style.transform = 'none'; 
-                    imageTextEl.style.left = '5vw';
-                    imageTextEl.style.right = '5vw';
-                    imageTextEl.style.textAlign = 'center';
-                    
-                    imageTextEl.style.top = isTop ? '75vh' : '20vh';
-                } else {
-                    imageTextEl.style.display = 'none';
-                }
-                
+                imageNumberEl.style.top = mobileIsTop ? '15vh' : '85vh';
             } else {
                 imageNumberEl.style.transform = 'none'; 
-                
                 const isNumberLeft = Math.random() > 0.5;
                 const isOutside = Math.random() < 0.70;
-                
                 let numX;
                 if (isOutside) {
                     numX = isNumberLeft ? Math.random() * 15 + 2 : Math.random() * 15 + 80;
@@ -533,15 +515,25 @@
                     numX = Math.random() * 40 + 30; 
                 }
                 const numY = Math.random() * 80 + 10;
-                
                 imageNumberEl.style.left = `${numX}vw`;
                 imageNumberEl.style.top = `${numY}vh`;
+            }
 
-                if (captionText && captionText.trim() !== "") {
-                    imageTextEl.innerHTML = captionText;
-                    imageTextEl.style.display = 'block';
+            // --- TEXT RENDER FUNKTION ---
+            function renderText(textToRender) {
+                if (!textToRender || textToRender.trim() === "") return;
+                
+                imageTextEl.innerHTML = textToRender;
+                imageTextEl.style.display = 'block';
+
+                if (isMobile) {
+                    imageTextEl.style.transform = 'none'; 
+                    imageTextEl.style.left = '5vw';
+                    imageTextEl.style.right = '5vw';
+                    imageTextEl.style.textAlign = 'center';
+                    imageTextEl.style.top = mobileIsTop ? '75vh' : '20vh';
+                } else {
                     imageTextEl.style.transform = 'none';
-                    
                     const isTextLeft = Math.random() > 0.5;
                     const textY = Math.random() * 80 + 10;
                     imageTextEl.style.top = `${textY}vh`;
@@ -557,9 +549,47 @@
                         imageTextEl.style.left = 'auto';
                         imageTextEl.style.textAlign = 'right';
                     }
-                } else {
-                    imageTextEl.style.display = 'none';
                 }
+            }
+
+            // Setze Text während des Ladens zurück
+            imageTextEl.style.display = 'none';
+
+            // Logik: Zuerst prüfen, ob du was in den Code geschrieben hast. 
+            // Wenn nicht, Bild-Metadaten scannen!
+            if (manualCaptionText && manualCaptionText.trim() !== "") {
+                renderText(manualCaptionText);
+            } else {
+                // Warte, bis das Bild geladen ist, um die Metadaten sicher auszulesen
+                modalImg.onload = function() {
+                    // Verhindert Text-Salat beim schnellen Durchklicken
+                    if (!modalImg.src.includes(filename)) return;
+
+                    EXIF.getData(modalImg, function() {
+                        if (!modalImg.src.includes(filename)) return;
+
+                        // Auslesen der Metadaten
+                        let desc = EXIF.getTag(this, "ImageDescription");
+                        let xpTitle = EXIF.getTag(this, "XPTitle"); // Windows benutzt oft dieses Format
+                        let finalDesc = "";
+
+                        if (desc) {
+                            finalDesc = desc;
+                        } else if (xpTitle && Array.isArray(xpTitle)) {
+                            // Windows XPTitle ist eine Byte-Reihe (UTF-16LE), wir übersetzen sie zu Text
+                            let str = "";
+                            for (let i = 0; i < xpTitle.length; i += 2) {
+                                if (xpTitle[i] === 0 && (i+1 >= xpTitle.length || xpTitle[i+1] === 0)) break;
+                                str += String.fromCharCode(xpTitle[i] | (xpTitle[i+1] << 8));
+                            }
+                            finalDesc = str;
+                        }
+
+                        if (finalDesc && finalDesc.trim() !== "") {
+                            renderText(finalDesc);
+                        }
+                    });
+                };
             }
         }
 
